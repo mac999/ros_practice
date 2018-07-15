@@ -1,0 +1,51 @@
+
+Dynamixel Dxl(1);  // use USART1 - Exp B/D for RPi
+// Dynamixel Dxl(3);  // use USART3 - 485 Exp B/D
+
+void setup()
+{
+  pinMode(BOARD_LED_PIN, OUTPUT);  
+  // Dynamixel 2.0 Baudrate -> 0: 9600, 1: 57600, 2: 115200, 3: 1Mbps 
+  Dxl.begin(3);
+  for( int i=1; i<=4; i++)  Dxl.jointMode(i);
+  while(!SerialUSB.available());
+}
+int model;
+void loop()
+{
+  for (int i=1; i<50; i++)
+  {
+    SerialUSB.print(i);    delay(10);    model = Dxl.readWord(i, 0);
+    if(model == 12)        SerialUSB.println(": AX-12A");
+    else if(model == 300)  SerialUSB.println(": AX-12W");
+    else if(model == 18)   SerialUSB.println(": AX-18A");
+    else if(model == 29)   SerialUSB.println(": MX-28");     
+    else if(model == 54)   SerialUSB.println(": MX-64");
+    else if(model == 64)   SerialUSB.println(": MX-106");
+    else if(model == 350)  SerialUSB.println(": XL-320");  
+    else if(model == 370)  SerialUSB.println(": XL-430Q");
+    else if(model == 380)  SerialUSB.println(": XL-430S");
+    else
+    {
+      if(model == 65535) model = 0;
+      SerialUSB.print(": Unknown : "); 
+      SerialUSB.println(model);
+    }
+  }
+  
+  for( int i = 0; i < 3; i++ )
+  {
+    for( int id=1; id<=4; id++ )  Dxl.writeWord( id, 30, 0 );
+    delay(1000);
+    for( int id=1; id<=4; id++ )  Dxl.writeWord( id, 30, 1024 );
+    delay(1000);
+  }
+
+  while(1)
+  {
+    digitalWrite(BOARD_LED_PIN, HIGH);  delay(100);
+    digitalWrite(BOARD_LED_PIN, LOW);   delay(100);
+  }
+}
+
+

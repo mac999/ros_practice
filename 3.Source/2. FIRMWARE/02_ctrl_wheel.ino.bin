@@ -1,0 +1,101 @@
+Dynamixel Dxl(1);  // use USART1 - Exp B/D for RPi
+// Dynamixel Dxl(3);  // use USART3 - 485 Exp B/D
+
+int spd = 400;
+int offset = 20;
+int flag = 0;
+
+void setup()
+{ // Dynamixel 2.0 Protocol -> 0: 9600, 1: 57600, 2: 115200, 3: 1Mbps 
+  Dxl.begin(3);
+  //Serial2.begin(115200);
+  SerialUSB.begin();
+  for( int i=1; i<=4; i++ )
+    Dxl.wheelMode(i);
+}
+
+void forward()
+{
+  flag = 1;  
+  Dxl.writeWord(1, 32, spd);          Dxl.writeWord(3, 32, spd);
+  Dxl.writeWord(2, 32, spd | 0x400);  Dxl.writeWord(4, 32, spd | 0x400);
+  SerialUSB.println("forward");
+}
+
+void back()
+{
+  flag = 2;
+  Dxl.writeWord(2, 32, spd);          Dxl.writeWord(4, 32, spd);
+  Dxl.writeWord(1, 32, spd | 0x400);  Dxl.writeWord(3, 32, spd | 0x400);
+  SerialUSB.println("back");
+}
+
+void right()
+{
+  flag = 4;
+  for( int i=1; i<=4; i++ )  Dxl.writeWord(i, 32, spd);
+  SerialUSB.println("right");
+}
+
+void left()
+{
+  flag = 3;
+  for( int i=1; i<=4; i++ )  Dxl.writeWord(i, 32, spd | 0x400);
+  SerialUSB.println("left");
+}
+
+void speedUp()
+{
+  if( spd <= 1000 )  spd = spd + offset;
+  else               spd = 1000;
+  SerialUSB.println(spd);  select();
+}
+
+void speedDn()
+{
+  if( spd >= 100 )  spd = spd - offset;
+  else              spd = 100;
+  SerialUSB.println(spd);  select();
+}
+
+void brake()
+{
+  flag = 0;
+  for( int i=1; i<=4; i++ )  Dxl.writeWord(i, 32, 0);
+  SerialUSB.println("stop");
+}
+
+void select()		// have to use after speed control
+{
+  switch(flag)
+  {
+    case(0):  brake();    break;
+    case(1):  forward();  break;
+    case(2):  back();     break;
+    case(3):  left();     break;
+    case(4):  right();    break;
+    default:              break;
+  }
+}
+
+void loop()
+{
+  if( SerialUSB.available() )  // Serial2.available())
+  {
+    char ch = SerialUSB.read();  // Serial2.read();
+    
+    switch(ch)
+    {
+      case ('w'):  forward();    break;
+      case ('s'):  back();       break;
+      case ('a'):  left();       break;
+      case ('d'):  right();      break;
+      case ('q'):  brake();      break;
+      case ('.'):  speedUp();    break;
+      case (','):  speedDn();    break;
+      default:                   break;
+    }
+  }
+}
+
+
